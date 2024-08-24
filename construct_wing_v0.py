@@ -4,6 +4,7 @@ Created on Thu Nov  4 22:03:18 2021
 
 @author: Jacynthe
 """
+import os
 import re
 import numpy as np
 from scipy import interpolate
@@ -15,6 +16,7 @@ from tkinter import messagebox
 
 global d2r, r2d
 
+global panel_list
 
 d2r = math.pi /180.0
 r2d = 1.0/d2r
@@ -23,9 +25,9 @@ def read_profile(filename_profil):
      """Reading Airfoil"""
      print("     Reading airfoil ")
      # Regex to identify data rows and throw away unused metadata
-     yval = '(?P<yval>(\-|\d*)\.\d+(E\-?\d+)?)'
-     zval = '(?P<zval>\-?\s*\d*\.\d+(E\-?\d+)?)'
-     _regex = '^\s*' + yval + '\,?\s*' + zval + '\s*$'
+     yval = r'(?P<yval>(\-|\d*)\.\d+(E\-?\d+)?)'
+     zval = r'(?P<zval>\-?\s*\d*\.\d+(E\-?\d+)?)'
+     _regex = r'^\s*' + yval + r'\,?\s*' + zval + r'\s*$'
      regex = re.compile(_regex)
 
      file = open(filename_profil, 'r')
@@ -187,9 +189,10 @@ def rotate(p):
 
 
     
-def add_kerf(p,hotwire):
+def add_kerf(p,hotwire,panel_list):
     """Adding Kerf"""
-    print("Adding Kerf to panel")
+ 
+    print("Adding Kerf to panel:", p.Panel_Number+1)
     # length ratio between root and tip
     srext = 0.0
     for i in range(len(p.root_Y_ext0)-1):
@@ -231,16 +234,50 @@ def add_kerf(p,hotwire):
 
 # Estimation of the speed at the root and tip and associated kerf
     carriage_max_feed_rate = float(hotwire.param[1])
-    xr = p.root_X[0]
-    xt = p.tip_X[0]
-    carriage_length = float(hotwire.param[0])
-    panel_length = float(p.panel_span)
-
-    root_feed_rate_ext = carriage_max_feed_rate*panel_length/(xt-xr*speed_ratio_ext)
-    root_feed_rate_int = carriage_max_feed_rate*panel_length/(xt-xr*speed_ratio_int)
     
-    tip_feed_rate_ext = carriage_max_feed_rate*panel_length/(xt/speed_ratio_ext -xr)
-    tip_feed_rate_int = carriage_max_feed_rate*panel_length/(xt/speed_ratio_int -xr)
+    if p.Panel_Number == 0 :
+        p.root_feed_rate_ext = carriage_max_feed_rate
+        p.root_feed_rate_int = carriage_max_feed_rate
+        root_feed_rate_ext = carriage_max_feed_rate
+        root_feed_rate_int = carriage_max_feed_rate
+    else :
+        last_p = panel_list[p.Panel_Number-1]
+        carriage_max_feed_rate_ext = last_p.tip_feed_rate_ext
+        carriage_max_feed_rate_int = last_p.tip_feed_rate_int
+       
+        root_feed_rate_ext = carriage_max_feed_rate_ext
+        p.root_feed_rate_ext =  root_feed_rate_ext
+        root_feed_rate_int = carriage_max_feed_rate_int
+        p.root_feed_rate_int =  root_feed_rate_int       
+ 
+    
+
+    
+    tip_feed_rate_ext = root_feed_rate_ext*speed_ratio_ext
+    tip_feed_rate_int = root_feed_rate_int*speed_ratio_int 
+
+    p.tip_feed_rate_ext = tip_feed_rate_ext
+    p.tip_feed_rate_int = tip_feed_rate_int
+
+    #print('speed @root ext/int',p.root_feed_rate_ext,p.root_feed_rate_int)
+    #print('speed @tip ext/int',p.tip_feed_rate_ext,p.tip_feed_rate_int)     
+    
+    # xr = p.root_X[0]
+    # xt = p.tip_X[0]
+    
+    # carriage_length = float(hotwire.param[0])
+   
+    # panel_length = float(p.panel_span)
+
+    # root_feed_rate_ext = carriage_max_feed_rate*panel_length/(xt-xr*speed_ratio_ext)
+    # root_feed_rate_int = carriage_max_feed_rate*panel_length/(xt-xr*speed_ratio_int)
+    
+    # tip_feed_rate_ext = carriage_max_feed_rate*panel_length/(xt/speed_ratio_ext -xr)
+    # tip_feed_rate_int = carriage_max_feed_rate*panel_length/(xt/speed_ratio_int -xr)
+    
+ 
+    
+
 
     kerf0 =0
     kerf0 = float(hotwire.param[8]) -kerf_law(carriage_max_feed_rate,kerf0)
@@ -248,7 +285,9 @@ def add_kerf(p,hotwire):
     kerf_root_ext = kerf_law(root_feed_rate_ext,kerf0)
     kerf_root_int = kerf_law(root_feed_rate_int,kerf0)
     kerf_tip_ext = kerf_law(tip_feed_rate_ext,kerf0)
-    kerf_tip_int = kerf_law(tip_feed_rate_int,kerf0)    
+    kerf_tip_int = kerf_law(tip_feed_rate_int,kerf0)   
+    
+    print('kerf(root/tip):',kerf_root_ext,kerf_tip_ext )
 
     # print(root_feed_rate_ext,root_feed_rate_int,tip_feed_rate_ext,tip_feed_rate_int)
     # print(kerf_root_ext,kerf_root_int,kerf_tip_ext,kerf_tip_int)
@@ -280,11 +319,11 @@ def add_kerf(p,hotwire):
             vect_n = np.asarray( [   vect_tg[1],  -vect_tg[0] ] )
             mod_n = norm(vect_n)
             vect_n= vect_n/mod_n
-            p.root_Y_int1.append(p.root_Y_int0[i] +vect_n[0]*kerf_root_ext)
-            p.root_Z_int1.append(p.root_Z_int0[i] +vect_n[1]*kerf_root_ext)
+            p.root_Y_int1.append(p.root_Y_int0[i] +vect_n[0]*kerf_root_int)
+            p.root_Z_int1.append(p.root_Z_int0[i] +vect_n[1]*kerf_root_int)
     
-    p.root_Y_int1.append(p.root_Y_int0[len(p.root_Y_int0)-1] +vect_n[0]*kerf_root_ext)
-    p.root_Z_int1.append(p.root_Z_int0[len(p.root_Y_int0)-1] +vect_n[1]*kerf_root_ext)
+    p.root_Y_int1.append(p.root_Y_int0[len(p.root_Y_int0)-1] +vect_n[0]*kerf_root_int)
+    p.root_Z_int1.append(p.root_Z_int0[len(p.root_Y_int0)-1] +vect_n[1]*kerf_root_int)
 
 
 
@@ -319,8 +358,8 @@ def add_kerf(p,hotwire):
             p.tip_Y_int1.append(p.tip_Y_int0[i] +vect_n[0]*kerf_tip_ext)
             p.tip_Z_int1.append(p.tip_Z_int0[i] +vect_n[1]*kerf_tip_ext)
     
-    p.tip_Y_int1.append(p.tip_Y_int0[len(p.tip_Y_int0)-1] +vect_n[0]*kerf_tip_ext)
-    p.tip_Z_int1.append(p.tip_Z_int0[len(p.tip_Y_int0)-1] +vect_n[1]*kerf_tip_ext)
+    p.tip_Y_int1.append(p.tip_Y_int0[len(p.tip_Y_int0)-1] +vect_n[0]*kerf_tip_int)
+    p.tip_Z_int1.append(p.tip_Z_int0[len(p.tip_Y_int0)-1] +vect_n[1]*kerf_tip_int)
 
 
 
@@ -331,7 +370,7 @@ def add_kerf(p,hotwire):
 
 def kerf_law(v,k0):
     """ estimated feed rate correction of the kerf , v in  mm/min , kerf in mm"""
-    kerf = k0 + 11.054*math.pow(v,-0.485)
+    kerf = k0 + 11.054*math.pow(v,-0.485)*0.5    # 1/2 of the total correction is needed
     return kerf
 
 def norm(vect):
@@ -344,8 +383,8 @@ def norm(vect):
 
 def carriage_projection(p,hotwire,foam):
      """Projection of the airfoil trace on the carriage axis """
-     print("Trace on carriage axis for panel")
-     eps = 1.0e-6
+     #print("Trace on carriage axis for panel")
+     #eps = 1.0e-6
      
      
      # check minimum length
@@ -588,6 +627,70 @@ def carriage_projection(p,hotwire,foam):
 
 
 
+def thickening(yint,zext,zint,target_TE_thickness,ystart_thickening=0.7):
+    """
+    Thickening the profil
+
+    Parameters 
+    ----------
+    y :  abscisse
+    z :  ordonnees
+   target_TE_thickness =  end thickness 
+   ystart_thickening  = start cord 
+
+    Returns
+    -------
+    z_ext : TYPE
+        DESCRIPTION.
+    z_int : TYPE
+        DESCRIPTION.
+
+    """
+    zext_thick =  zext
+    zint_thick =  zint  
+    te_thickness  = zext[-1] - zint[-1]
+    
+    
+    if(te_thickness >= target_TE_thickness) :
+        
+        zext_thick =  zext
+        zint_thick = zint
+        
+        print(" TE thickness not affected")
+        
+    else  : 
+       # thicknening the TE
+       # center line
+
+       
+       zcenter_line = 0.5*( zext+zint)
+       te_thickness_ext = abs(zext[-1] - zcenter_line[-1])
+       te_thickness_int = abs(zint[-1] - zcenter_line[-1])
+       
+       coeff_ampli_TE_ext = 0.5*target_TE_thickness - te_thickness_ext
+       coeff_ampli_TE_int = 0.5*target_TE_thickness - te_thickness_int    
+       
+       for ic,y in  enumerate(yint) :
+           ysymax = y/yint[-1]
+           if ysymax < ystart_thickening:
+               zext_thick[ic] =  zext[ic]
+               zint_thick[ic] =  zint[ic]  
+           else :
+               dz_ext = (ysymax-ystart_thickening)/(1.0-ystart_thickening)*coeff_ampli_TE_ext
+               zext_thick[ic]=zext[ic] + dz_ext 
+       
+               dz_int= (ysymax-ystart_thickening)/(1.0-ystart_thickening)*coeff_ampli_TE_int
+               zint_thick[ic]=zint[ic] - dz_int          
+ 
+    
+    return zext_thick , zint_thick
+
+
+
+
+
+
+
 
 def calc_coord(panel_list,foam,hotwire):
 
@@ -605,28 +708,99 @@ def calc_coord(panel_list,foam,hotwire):
          
          Y_Ext_Profile , Y_Int_Profile, Z_Ext_Profile, Z_Int_Profile = resampling(Y_Ext_Profile0 , Y_Int_Profile0, Z_Ext_Profile0, Z_Int_Profile0,num_points)
 
-         p.root_Y_ext0 = (Y_Ext_Profile)*float(p.rootchord) 
-         p.root_Z_ext0 = (Z_Ext_Profile)*float(p.rootchord) 
-         p.root_Y_int0 = (Y_Int_Profile)*float(p.rootchord)
-         p.root_Z_int0 = (Z_Int_Profile)*float(p.rootchord)
+         p.root_Y_ext00 = (Y_Ext_Profile)*float(p.rootchord) 
+         p.root_Z_ext00 = (Z_Ext_Profile)*float(p.rootchord) 
+         p.root_Y_int00 = (Y_Int_Profile)*float(p.rootchord)
+         p.root_Z_int00 = (Z_Int_Profile)*float(p.rootchord)
          
+         # Increasing  the trailing edge thickness to 2 mm starting @ 70% of the cord.
+         # constant thicness over the whole panel span
+         # current trailing edge thickness
+         
+ 
+         target_TE_thickness = float(p.target_TE_thickness)
+         
+         ystart_thickening = 0.7   # 70%
+         
+         
+         
+         
+         p.root_Z_ext0, p.root_Z_int0 = thickening( p.root_Y_int00           
+                                                   ,p.root_Z_ext00  
+                                                   ,p.root_Z_int00 
+                                                   ,target_TE_thickness
+                                                   ,ystart_thickening)
+         
+         p.root_Y_ext0 =  p.root_Y_ext00  
+         p.root_Y_int0 =  p.root_Y_int00
+         
+         
+         # te_thickness  = p.root_Z_ext00[-1] - p.root_Z_int00[-1]
+         
+         
+         # if(te_thickness >= target_TE_thickness) :
+         #     p.root_Y_ext0 =  p.root_Y_ext00
+         #     p.root_Z_ext0 =  p.root_Z_ext00
+         #     p.root_Y_int0 =  p.root_Y_int00
+         #     p.root_Z_int0 =  p.root_Z_int00  
+         # else  : 
+         #    # thicknening the TE
+         #    # center line
+         #    p.root_Y_ext0 =  p.root_Y_ext00
+         #    p.root_Y_int0 =  p.root_Y_int00
+            
+         #    zcenter_line = 0.5*( p.root_Z_ext00+p.root_Z_int00)
+         #    te_thickness_ext = abs(p.root_Z_ext00[-1] - zcenter_line[-1])
+         #    te_thickness_int = abs(p.root_Z_int00[-1] - zcenter_line[-1])
+            
+         #    coeff_ampli_TE_ext = 0.5*target_TE_thickness - te_thickness_ext
+         #    coeff_ampli_TE_int = 0.5*target_TE_thickness - te_thickness_int    
+            
+         #    for ic,y in  enumerate(p.root_Y_ext00) :
+         #        ysymax = y/p.root_Y_ext00[-1]
+         #        if ysymax < ystart_thickening:
+         #            p.root_Y_ext0 =  p.root_Y_ext00
+         #            p.root_Z_ext0 =  p.root_Z_ext00
+         #            p.root_Y_int0 =  p.root_Y_int00
+         #            p.root_Z_int0 =  p.root_Z_int00  
+         #        else :
+                    
+         #            dz_ext = (ysymax-ystart_thickening)/(1.0-ystart_thickening)*coeff_ampli_TE_ext
+         #            p.root_Z_ext0[ic]=p.root_Z_ext00[ic] + dz_ext 
+            
+         #            dz_int= (ysymax-ystart_thickening)/(1.0-ystart_thickening)*coeff_ampli_TE_int
+         #            p.root_Z_int0[ic]=p.root_Z_int00[ic] - dz_int            
+            
+ 
 
-
+         
+        #-------------------------------------------------------------
         # tip
+        #------------------------------------------------------------- 
          npts, Y_Ext_Profile0 , Y_Int_Profile0, Z_Ext_Profile0, Z_Int_Profile0 = read_profile(p.tip_airfoil_filename)
          p.tipnpts = npts
          
          Y_Ext_Profile , Y_Int_Profile, Z_Ext_Profile, Z_Int_Profile = resampling(Y_Ext_Profile0 , Y_Int_Profile0, Z_Ext_Profile0, Z_Int_Profile0,num_points)
          
-         p.tip_Y_ext0 = (Y_Ext_Profile)*float(p.tipchord)  
-         p.tip_Z_ext0 = (Z_Ext_Profile)*float(p.tipchord)         
-         p.tip_Y_int0 = (Y_Int_Profile)*float(p.tipchord)
-         p.tip_Z_int0 = (Z_Int_Profile)*float(p.tipchord)
+         p.tip_Y_ext00 = (Y_Ext_Profile)*float(p.tipchord)  
+         p.tip_Z_ext00 = (Z_Ext_Profile)*float(p.tipchord)         
+         p.tip_Y_int00 = (Y_Int_Profile)*float(p.tipchord)
+         p.tip_Z_int00 = (Z_Int_Profile)*float(p.tipchord)
 
-        
-         #print(p.tip_Y_ext0)
-         # print(p.tip_Z_ext0) 
-         # print(p.tip_Z_int0)
+ 
+         # Increasing  the trailing edge thickness to 2 mm starting @ 70% of the cord.
+         # constant thicness over the whole panel span
+         # current trailing edge thickness
+
+         p.tip_Z_ext0, p.tip_Z_int0 = thickening( p.tip_Y_int00           
+                                                   ,p.tip_Z_ext00  
+                                                   ,p.tip_Z_int00 
+                                                   ,target_TE_thickness
+                                                   ,ystart_thickening)
+         
+         p.tip_Y_ext0 =  p.tip_Y_ext00  
+         p.tip_Y_int0 =  p.tip_Y_int00
+         
          
          rotate(p)
          
@@ -696,7 +870,7 @@ def calc_coord(panel_list,foam,hotwire):
 # Adding Kerf
             
     for ip, p in enumerate(panel_list):
-        add_kerf(p,hotwire)
+        add_kerf(p,hotwire,panel_list)
 
 #   Airfoil Projection on carriage axis
         

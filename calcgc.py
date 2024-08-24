@@ -1,3 +1,4 @@
+import os
 from construct_wing_v0 import *
 
 import numpy as np
@@ -5,12 +6,17 @@ import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
+
+
 #================================================================
 #===================Create Gcode===========================
 #================================================================
 
 
 def write_gc(hotwire,model_name,panel_list,side):  
+    
+    
+    global gcode_export_dir
  
     
     SX1 = hotwire.param[2]
@@ -18,16 +24,24 @@ def write_gc(hotwire,model_name,panel_list,side):
     SX2 = hotwire.param[4]
     SY2 = hotwire.param[5]
     
-    
+   
     for i,p in enumerate(panel_list):
     
         if side == "L" :
-            file = './GCODE/'+model_name.split('.')[0]+'_panel_'+str(i+1) +'_L'+'.gc'
+            #file = './GCODE/'+model_name.split('.')[0]+'_panel_'+str(i+1) +'_L'+'.gc'
+            base_filename = model_name.split('.')[0]+'_panel_'+str(i+1) +'_L'+'.gc'
+            file = os.path.join(hotwire.gcode_export_dir, base_filename)
+            
+            
+            
         elif side == "R":
-            file = './GCODE/'+model_name.split('.')[0]+'_panel_'+str(i+1) +'_R'+'.gc'
+            #file = './GCODE/'+model_name.split('.')[0]+'_panel_'+str(i+1) +'_R'+'.gc'
+            base_filename = model_name.split('.')[0]+'_panel_'+str(i+1) +'_R'+'.gc'
+            file = os.path.join(hotwire.gcode_export_dir, base_filename)
+
         
-        
-        
+        feed_rate_ext = p.root_feed_rate_ext
+        feed_rate_int = p.root_feed_rate_int
        
         x1 =[]
         y1 =[]
@@ -84,10 +98,10 @@ def write_gc(hotwire,model_name,panel_list,side):
             fileobj.write("( Travel rate  in mm/min) \n")
             gcstring="G94"+'\n'
             fileobj.write(gcstring)
-            gcstring="F" +hotwire.param[1].strip()+'\n'
-            fileobj.write(gcstring)
-            
-            
+            # gcstring="F" +hotwire.param[1].strip()+'\n'
+            # fileobj.write(gcstring)
+            gcstring="F"+ str("{:.1f}".format(feed_rate_ext))+'\n'
+            fileobj.write(gcstring)           
             
             
             for i in range(iend_extrados):
@@ -186,7 +200,9 @@ def export_gc(model_name,panel_list,foam,hotwire):
         plt.show() 
 
         fig = plt.figure() 
-        ax = fig.gca(projection='3d')
+        #ax = fig.gca(projection='3d')
+        #ax = Axes3D(fig)
+        ax = fig.add_subplot(projection='3d')
         ax.plot(p.root_X, p.root_Y_ext1, p.root_Z_ext1, label='Root', c='r')
         ax.plot(p.root_X, p.root_Y_int1, p.root_Z_int1,  c='r')
         ax.plot(p.tip_X, p.tip_Y_ext1, p.tip_Z_ext1, label='tip', c='b')
@@ -212,8 +228,9 @@ def export_gc(model_name,panel_list,foam,hotwire):
         # ax.plot([-10],[100], [-10],  c='white')
    
         # ax.plot([-10],[-10], [50],  c='white')
+        plt.show() 
 
-    write_gc(hotwire,model_name,panel_list,"L",)
+    write_gc(hotwire,model_name,panel_list,"L")
     write_gc(hotwire,model_name,panel_list,"R")
 
     return 

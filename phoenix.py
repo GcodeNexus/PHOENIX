@@ -38,40 +38,40 @@ class FoamBlock():
 #       """get the foam xoffset"""
         self.var = self.ehfbxo.get().strip()
         self.param[0] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
     def callbackefbyo(self):
 #       """get the foam xoffset"""
         self.var = self.ehfbyo.get().strip()
         self.param[1] = self.var
-        print(self.param)
+        #print(self.param)
         return True
     def callbackefbzo(self):
 #       """get the foam xoffset"""
         self.var = self.ehfbzo.get().strip()
         self.param[2] = self.var
-        print(self.param)
+        #print(self.param)
         return True
   
     def callbackefbovle(self):
 #       """get the foam xoffset"""
         self.var = self.ehfbovle.get().strip()
         self.param[3] = self.var
-        print(self.param)
+        #print(self.param)
         return True
     def callbackefbovte(self):
 #       """get the foam xoffset"""
         self.var = self.ehfbovte.get().strip()
         self.param[4] = self.var
-        print(self.param)
+        #print(self.param)
         return True
     
     def callbackefbh(self):
 #       """get the foam xoffset"""
         self.var = self.ehfbh.get().strip()
         self.param[5] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
     def construct(self,foam_param):
@@ -141,7 +141,8 @@ class FoamBlock():
         canvas_for_image.grid(column=3, row=irow)
         
         image = Image.open("./IMAGE/f.png")
-        canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500), Image.ANTIALIAS))
+        #canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500), Image.ANTIALIAS))
+        canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500)) )  
         canvas_for_image.create_image(0, 0, image=canvas_for_image.image, anchor='nw')
 
 
@@ -181,12 +182,18 @@ class Machine():
 
     def __init__(self):
         """Init hotwire"""
+        
+        self.default_gcode_export_dir='./GCODE'
+        self.gcode_export_dir= self.default_gcode_export_dir
+        
+        
+        
 
     def callbackehwl(self):
 #       """get the hotwire length"""
         self.var = self.ehwl.get().strip()
         self.param[0] = self.var
-        print(self.param)
+        #print(self.param)
         return True
         # if self.var.isdigit():
         #     self.param[0] = self.var
@@ -200,7 +207,7 @@ class Machine():
 #       """get the hotwire length"""
         self.var = self.ehwcs.get().strip()
         self.param[1] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
 
@@ -208,14 +215,14 @@ class Machine():
 #       """get the hotwire length"""
         self.var = self.ehwx1.get().strip()
         self.param[2] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
     def callbackehwy1(self):
 #       """get the hotwire length"""
         self.var = self.ehwy1.get().strip()
         self.param[3] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
 
@@ -223,14 +230,14 @@ class Machine():
 #       """get the hotwire length"""
         self.var = self.ehwx2.get().strip()
         self.param[4] = self.var
-        print(self.param)
+        #print(self.param)
         return True
     
     def callbackehwy2(self):
 #       """get the hotwire length"""
         self.var = self.ehwy2.get().strip()
         self.param[5] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
 
@@ -238,21 +245,21 @@ class Machine():
 #       """get the hotwire length"""
         self.var = self.ehwxl.get().strip()
         self.param[6] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
     def callbackehwyl(self):
 #       """get the hotwire length"""
         self.var = self.ehwyl.get().strip()
         self.param[7] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
     def callbackehwk0(self):
 #       """get the kerf """
         self.var = self.ehwk0.get().strip()
         self.param[8] = self.var
-        print(self.param)
+        #print(self.param)
         return True
 
     def construct(self,hotwire_param):
@@ -348,9 +355,34 @@ class Machine():
         canvas_for_image.grid(column=4, row=irow)
         
         image = Image.open("./IMAGE/m.png")
-        canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500), Image.ANTIALIAS))
+       # canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500), Image.ANTIALIAS))
+        canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500)))
         canvas_for_image.create_image(0, 0, image=canvas_for_image.image, anchor='nw')
         
+    def select_export_directory(self, tab4):
+    
+
+        self.gcode_export_dir = filedialog.askdirectory(initialdir= self.default_gcode_export_dir)
+        
+        if os.path.isdir(self.gcode_export_dir) :
+            print("Selected directory:", self.gcode_export_dir)   
+        else:
+            print('Directory not valid -> set to default')
+            messagebox.showwarning('Directory not valid -> set to default')
+            self.gcode_export_dir = self.default_gcode_export_dir
+        
+        lbldir.config(text="")
+        #lbldir = Label(tab4, text= gcode_export_dir, bg="white")
+        lbldir .config(text=hotwire.gcode_export_dir)
+       #lbldir.grid(column=2, row=irow)
+
+
+
+
+
+
+
+
         
 
 def hotwire_default_set_up():
@@ -387,6 +419,9 @@ class Panel :
     def __init__(self,n):
         """Init panel"""
 
+        self.default_target_TE_thickness = 1.0
+        self.target_TE_thickness = self.default_target_TE_thickness
+
         self.Panel_Number = n
         #print("--------------------------------------")
         #print('Panel Nb', self.Panel_Number+1)
@@ -413,6 +448,13 @@ class Panel :
         
         
         # after  kerf correction  
+        
+        
+        self.root_feed_rate_ext = 0.0
+        self.root_feed_rate_int = 0.0
+        self.tip_feed_rate_ext = 0.0
+        self.tip_feed_rate_int = 0.0        
+        
 
         self.root_Y_ext1 =  []
         self.root_Y_int1 =  []
@@ -454,7 +496,7 @@ class Panel :
     def callbackt(self,event):
 #         """get the tip chord length,  set the root chord length for the nex panel"""
         self.tipchord=self.etc.get()       
-        print(' Panel :',self.Panel_Number,'/',npanel,', Root',  self.rootchord,', Tip:',self.etc.get() )       
+        #print(' Panel :',self.Panel_Number,'/',npanel,', Root',  self.rootchord,', Tip:',self.etc.get() )       
   
         if npanel > 1 :
             if ((self.Panel_Number+1) < npanel ) :
@@ -493,7 +535,7 @@ class Panel :
     def callbacks(self,event):
 #         """get the sweep angle for the leading edge (>0 , backward )"""
         self.sweepangle=self.esr.get()
-        print(' Panel :',self.Panel_Number,'/',npanel, 
+        print(' Panel :',self.Panel_Number+1,'/',npanel, 
               ', Root',  self.rootchord,
               ', Tip:',self.etc.get(),
               'Sweep',self.sweepangle  ) 
@@ -502,14 +544,14 @@ class Panel :
     def callbackwr(self,event):
 #         """get the washout angle for the root (>0 , trailing edge up )"""
         self.root_washout=self.ewr.get()
-        print(' Panel :',self.Panel_Number,'/',npanel, 
+        print(' Panel :',self.Panel_Number+1,'/',npanel, 
               'Wash r',self.root_washout              ) 
 
 
     def callbackwt(self,event):
 #         """get the washout angle for the tip (>0 , trailing edge up )"""
         self.tip_washout=self.ewt.get()
-        print(' Panel :',self.Panel_Number,'/',npanel, 
+        print(' Panel :',self.Panel_Number+1,'/',npanel, 
               'Wash t ',self.tip_washout )
         if npanel > 1 :
             if ((self.Panel_Number+1) < npanel ) :
@@ -533,14 +575,22 @@ class Panel :
     def callbackhxr(self,event):
 #         """get the position of the root hinge line x/c  /LE (%)"""
         self.root_hingex=self.ehxr.get()
-        print(' Panel :',self.Panel_Number,'/',npanel, 
+        print(' Panel :',self.Panel_Number+1,'/',npanel, 
               'Root Hinge x',self.root_hingex              )
         
     def callbackhxt(self,event):
 #         """get the position of the tip hinge line x/c  /LE (%)"""
         self.tip_hingex=self.ehxt.get()
-        print(' Panel :',self.Panel_Number,'/',npanel, 
+        print(' Panel :',self.Panel_Number+1,'/',npanel, 
               'Tip Hinge x',self.tip_hingex              ) 
+
+
+
+
+
+
+
+
 
 
     def construct(self):
@@ -651,6 +701,12 @@ class Panel :
         self.ehxt.grid(column=1, row=irow)
         self.ehxt.insert(0,"")
         self.ehxt.bind('<Return>',self.callbackhxt)
+        
+        
+        we0.bind('<Return>',callbackModName)
+        
+        we20.bind('<Return>',callbackTEth)
+        
 
 #================================================================
 
@@ -723,7 +779,9 @@ def load_default_wing():
         
         p.ehxt.delete(0,END)
         p.tip_hingex= "75"
-        p.ehxt.insert(0, p.tip_hingex)        
+        p.ehxt.insert(0, p.tip_hingex)
+
+        p.target_TE_thickness = p.default_target_TE_thickness        
  
 
 #================================================================
@@ -732,10 +790,17 @@ def load_default_wing():
 def load_open_model_wing():
     global panel_list
     global model_name
+    global npanel
     
 
     we0.delete(0,END)
     we0.insert(0,model_name)
+    
+    we1.delete(0,END)
+    we1.insert(0, str(npanel))
+    
+    we20.delete(0,END)
+    we20.insert(0, panel_list[0].target_TE_thickness)
     
     for ip, p in enumerate(panel_list):
         p.ews.delete(0,END)
@@ -811,6 +876,30 @@ def fct_wing_validate():
 
     load_default_wing()
 
+
+def callbackTEth(event):
+#         """get the TE thicknes"""
+    target_TE_thickness  = we20.get()
+    
+    for ipanel in range(npanel):
+        panel_list[ipanel].target_TE_thickness = target_TE_thickness
+    
+    print( 'Target Thickness',target_TE_thickness,' mm'  ) 
+
+
+
+
+def callbackModName(event):
+#         """get the TE thicknes"""
+    model_name  = we0.get()
+ 
+    print( 'Model name',model_name ) 
+
+
+
+
+
+
 #================================================================
 #            Fonction to read all wing data
 #================================================================
@@ -834,6 +923,13 @@ def fct_read_wing():
     for ip, p in enumerate(panel_list):
         
         fault_list.append("-----PANEL "+str(ip+1)+"-----")
+        
+        
+      
+        
+         
+        
+        
         
         p.panel_span = p.ews.get()
         if p.panel_span == "" :
@@ -887,6 +983,11 @@ def fct_read_wing():
         if p.tip_hingex == "" :
             status = False
             fault_list.append("tip_hingex")
+
+       
+
+        p.target_TE_thickness = we20.get()
+
 
 
     return status, fault_list
@@ -1050,6 +1151,7 @@ def open_model():
     global panel_list
     global main_frame
     global model_name
+    global npanel
     
     open_model_filename = filedialog.askopenfilename(initialdir=".", title="Select a model file", filetypes=( ("mod files", "*.mod") , ("txt files", "*.txt")  )  ) 
 
@@ -1058,17 +1160,23 @@ def open_model():
     main_frame.grid(row=3,column=3)  
 
     with  open(open_model_filename) as file:
+        
+        version=file.readline()
+        
         line=file.readline()
         model_name = file.readline().strip('\n')
         line=file.readline()
         npanel= int(file.readline())
+        
+        
+
         
         frame_list = []
         panel_list =[]
         for ipanel in range(npanel):
             
             line=file.readline()
-            print(line)
+            #print(line)
             p = Panel(ipanel)
             panel_list.append(p)
             p.construct()
@@ -1084,6 +1192,7 @@ def open_model():
             p.tip_washout = file.readline()
             p.root_hingex= file.readline()
             p.tip_hingex = file.readline()
+            p.target_TE_thickness = file.readline()
         
         # read hotwire description
         l = file.readline()
@@ -1103,6 +1212,8 @@ def open_model():
         foam.construct(foam.param)
         
     file.close()
+    
+    
     load_open_model_wing()
 
 
@@ -1117,7 +1228,8 @@ def save_model():
         return
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    
+    save_model_file.write("# version 1.1 "+'\n')
+ 
     save_model_file.write("# Created the ")
     save_model_file.write(dt_string)
     save_model_file.write('\n')
@@ -1142,6 +1254,8 @@ def save_model():
         save_model_file.write(p.tip_washout.strip('\n') +'\n')
         save_model_file.write(p.root_hingex.strip('\n')+'\n') 
         save_model_file.write(p.tip_hingex.strip('\n') +'\n')
+        
+        save_model_file.write(p.target_TE_thickness.strip('\n') +'\n')        
 
    
     save_model_file.write("#    Hotwire Description   \n")
@@ -1166,8 +1280,6 @@ def save_model():
 
 
 
-
-
 #=====================================================
 #=====================================================
 #=====================================================
@@ -1187,9 +1299,8 @@ if __name__ == '__main__':
     wing_canvas_height = 300
 
     global model_name    
-    
-    
     model_name = 'default_model'
+
     
     menuBar = Menu(root)
     
@@ -1254,7 +1365,17 @@ if __name__ == '__main__':
     main_frame = LabelFrame(tab1, text='Wing platform Description ', width=500, height=200)
     main_frame.grid(row=irow,column=3)  
  
-    
+    irow += 1
+    lbl1 = Label(tab1, text= 'Trailing edge thickness (mm):', anchor='e',width = 25)
+    lbl1.grid(column=0, row=irow)
+    we20 = Entry(tab1, width=20,justify="right")
+    we20.grid(column=1, row=irow)
+    p = Panel(0)
+    we20.insert(0, str(p.default_target_TE_thickness))  
+
+
+
+   
     
     
     irow += 1
@@ -1301,10 +1422,27 @@ if __name__ == '__main__':
     #      Tab   Export gcode
     #================================================================
     #    
+ 
     
-    irow  = 0
+    irow = 0
+    wbutton_select_export_dir =  Button(tab4, text='Seclect Gcode export directory', command=lambda:hotwire.select_export_directory(tab4))
+    wbutton_select_export_dir.grid(row=irow, column=1)
+    # gcode_export_dir = filedialog.askdirectory(initialdir='./GCODE')   
+    #gcode_export_dir = './GCODE'
+   
+    #print("dir=", gcode_export_dir)
+    
+    lbldir = Label(tab4, text= hotwire.gcode_export_dir, bg="white")
+    lbldir.grid(column=2, row=irow)
+    
+    irow = irow+1
     wbutton_validate = Button(tab4, text='Export Panels gcode', command= lambda:export_gc(model_name,panel_list,foam,hotwire), fg="black", bg="white", padx = 35)
     wbutton_validate.grid(row=irow, column=1)
+
+
+
+
+
 
  
     irow = irow+1
@@ -1312,7 +1450,8 @@ if __name__ == '__main__':
     canvas_for_image.grid(column=1, row=irow)
     
     image = Image.open("./IMAGE/phoenix.ico")
-    canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500), Image.ANTIALIAS))
+    #canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500), Image.ANTIALIAS))
+    canvas_for_image.image = ImageTk.PhotoImage(image.resize((600, 500)))   
     canvas_for_image.create_image(0, 0, image=canvas_for_image.image, anchor='nw')
     
  
